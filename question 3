@@ -1,0 +1,27 @@
+Question 3: By default do django signals run in the same database transaction as the caller? Please support your answer with a code snippet that conclusively proves your stance. The code does not need to be elegant and production ready, we just need to understand your logic.
+1. Define a Model and Signal in models.py
+import threading
+from django.db import models
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+
+class TestModel(models.Model):
+    name = models.CharField(max_length=100)
+
+@receiver(post_save, sender=TestModel)
+def check_thread(sender, instance, **kwargs):
+    print(f"Signal running in thread: {threading.get_ident()}")
+
+2. Testing the Signal Execution
+Run the following in Django shell:
+
+from myapp.models import TestModel
+import threading
+
+print(f"Main thread ID: {threading.get_ident()}")
+
+TestModel.objects.create(name="Test Entry")
+
+3. Expected Output
+Main thread ID: 140735846011648
+Signal running in thread: 140735846011648
