@@ -27,6 +27,6 @@ TestModel.objects.create(name="Test Entry")
 
 Expected Output
 
-Edit
+
 Caller Thread ID: 140485967943424
 Signal Handler Thread ID: 140485967943424
