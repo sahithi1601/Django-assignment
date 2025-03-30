@@ -1,0 +1,51 @@
+Question 1: By default are django signals executed synchronously or asynchronously? Please support your answer with a code snippet that conclusively proves your stance. The code does not need to be elegant and production ready, we just need to understand your logic. 
+
+code implementation:
+1. Define a Model and Signal in models.py
+python
+Copy
+Edit
+import time
+from django.db import models
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+
+class TestModel(models.Model):
+    name = models.CharField(max_length=100)
+
+@receiver(post_save, sender=TestModel)
+def slow_signal_handler(sender, instance, **kwargs):
+    print("Signal received. Processing starts...")
+    start_time = time.time()
+    
+    time.sleep(5)  # Simulating a delay
+    
+    end_time = time.time()
+    print(f"Processing complete. Time taken: {end_time - start_time:.2f} seconds")
+
+2. Testing the Signal Execution
+Run the following in Django shell:
+
+python
+Copy
+Edit
+from myapp.models import TestModel
+import time
+
+print("Creating instance...")
+start_time = time.time()
+
+TestModel.objects.create(name="Test Entry")
+
+end_time = time.time()
+print(f"Total execution time: {end_time - start_time:.2f} seconds")
+
+3. Expected Output (Proves Synchrony)
+less
+Copy
+Edit
+Creating instance...
+Signal received. Processing starts...
+(Waits for 5 seconds)
+Processing complete. Time taken: 5.00 seconds
+Total execution time: 5.00 seconds
