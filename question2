@@ -1,0 +1,32 @@
+Question 2: Do django signals run in the same thread as the caller? Please support your answer with a code snippet that conclusively proves your stance. The code does not need to be elegant and production ready, we just need to understand your logic.
+
+step 1: Define the Model and Signal (models.py)
+
+import threading
+from django.db import models
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+
+class TestModel(models.Model):
+    name = models.CharField(max_length=100)
+
+@receiver(post_save, sender=TestModel)
+def signal_handler(sender, instance, **kwargs):
+    print(f"Signal Handler Thread ID: {threading.get_ident()}")
+
+Step 2: Run a Test in Django Shell
+
+from myapp.models import TestModel
+import threading
+
+print(f"Caller Thread ID: {threading.get_ident()}")
+
+# Creating an instance to trigger the signal
+TestModel.objects.create(name="Test Entry")
+
+
+Expected Output
+
+Edit
+Caller Thread ID: 140485967943424
+Signal Handler Thread ID: 140485967943424
