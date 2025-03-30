@@ -1,27 +1,42 @@
 Question 3: By default do django signals run in the same database transaction as the caller? Please support your answer with a code snippet that conclusively proves your stance. The code does not need to be elegant and production ready, we just need to understand your logic.
 1. Define a Model and Signal in models.py
-import threading
-from django.db import models
+from django.db import models, transaction
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
 class TestModel(models.Model):
     name = models.CharField(max_length=100)
 
+class LogModel(models.Model):
+    message = models.CharField(max_length=255)
+
 @receiver(post_save, sender=TestModel)
-def check_thread(sender, instance, **kwargs):
-    print(f"Signal running in thread: {threading.get_ident()}")
+def create_log(sender, instance, **kwargs):
+    print("Signal: Creating log entry...")
+    LogModel.objects.create(message=f"Created TestModel instance with id {instance.id}")
+
 
 2. Testing the Signal Execution
 Run the following in Django shell:
 
-from myapp.models import TestModel
-import threading
+from myapp.models import TestModel, LogModel
+from django.db import transaction
 
-print(f"Main thread ID: {threading.get_ident()}")
+print(f"Log count before: {LogModel.objects.count()}")
 
-TestModel.objects.create(name="Test Entry")
+try:
+    with transaction.atomic():  
+        TestModel.objects.create(name="Test Entry")
+        print(f"Log count after signal execution: {LogModel.objects.count()}")
+        raise Exception("Forcing transaction rollback")
+except:
+    pass
+
+print(f"Log count after rollback: {LogModel.objects.count()}")
+
 
 3. Expected Output
-Main thread ID: 140735846011648
-Signal running in thread: 140735846011648
+Log count before: 0
+Signal: Creating log entry...
+Log count after signal execution: 1
+Log count after rollback: 0
